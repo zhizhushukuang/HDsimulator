@@ -1,5 +1,6 @@
 # HDsimulator
 这是游戏白夜极光的荒典模拟器，主程序编译后储存在by1.exe内。程序所需内容储存在config.json内，InitQuads储存了初始盘面，PlayerPosition，MonsterPosition为玩家坐标和怪物坐标，bechangedcolor1为被转色的颜色，这个属性被五星转色和六星转色共用。bechangedcolor2为六星转色的第二转色。bechangedcolorto储存着转色目标。QuadsColorList为将出现的格子序列。fixpriority_list和priority_list数据现在已经废弃。
+转色默认采用现在连线末端进行转色
 按下esc，盘面进入编辑状态。此时点击格子使用1，2，3，4，5，6进行改色。再按一次esc退出编辑状态。按下q进入五星转色激活态，此时按下123可以预览四/五/六格转色格子，按下4回退格子并退出激活态。按下5应用技能。按下e进入六星转色激活态。其余同五星。按下e进入十字转色激活态，按1预览转色格子，2取消应用并退出，按下3应用技能并退出。按下r进入自选格子激活态，此时鼠标左键将格子转为bechangedcolorto的颜色，右键转为白色。
 玩家使用鼠标左键进行移动，鼠标右键可以回退上一次移动，单击滚轮，则将当前盘面等输出为NEWconfig.json。按下回车，玩家坐标移动到当前连线终点并额外跳过一个QuadsColorList。键盘按键t和空格键分别能够进行一个进格和退格。
 readpic从本地读取IMGNEXT.png并进行识别，识别数据储存在picconfig.json内。esc进入编辑状态。鼠标左键移动右键回退。键盘r会将连线格子颜色依次输出到NewColorListjson.json内。readpic使用try方式打开IMG并进行显示。
