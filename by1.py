@@ -355,7 +355,7 @@ def main():
     wskill_mode=False
     eskill_mode=False
     rskill_mode=False
-
+    x,y=player_position
     path = [player_position]
     used_colors = []
 
@@ -444,11 +444,11 @@ def main():
                         pygame.display.update()
                 elif(qskill_mode == True):
                         if event.key == K_1:
-                            skill_q(screen,player_position,init_quads,4)
+                            skill_q(screen,(x,y),init_quads,4)
                         if event.key == K_2:
-                            skill_q(screen,player_position,init_quads,5)
+                            skill_q(screen,(x,y),init_quads,5)
                         if event.key == K_3:
-                            skill_q(screen,player_position,init_quads,6)
+                            skill_q(screen,(x,y),init_quads,6)
                         if event.key == K_4:
                             REskill_q(screen,init_quads)
                             qskill_mode=not qskill_mode
@@ -459,11 +459,11 @@ def main():
                         pygame.display.update()
                 elif(wskill_mode == True):
                         if event.key == K_1:
-                            skill_w(screen,player_position,init_quads,4)
+                            skill_w(screen,(x,y),init_quads,4)
                         if event.key == K_2:
-                            skill_w(screen,player_position,init_quads,5)
+                            skill_w(screen,(x,y),init_quads,5)
                         if event.key == K_3:
-                            skill_w(screen,player_position,init_quads,6)
+                            skill_w(screen,(x,y),init_quads,6)
                         if event.key == K_4:
                             REskill_w(screen,init_quads)
                             wskill_mode=not wskill_mode
@@ -475,9 +475,9 @@ def main():
                         
                 elif(eskill_mode == True):
                         if event.key == K_1:
-                            skill_e(screen,player_position,init_quads)
+                            skill_e(screen,(x,y),init_quads)
                         if event.key == K_2:
-                            REskill_e(screen,player_position,init_quads)
+                            REskill_e(screen,(x,y),init_quads)
                             eskill_mode=not eskill_mode
                             print("REskill_e")   
                         if event.key == K_3:
@@ -494,6 +494,7 @@ def main():
                 if event.button == 1:
                     print(event.pos)
                     if ((CurrentIndex < len(quads_color_list)) & (event.pos[0] < WIDTH) & (event.pos[1] < WIDTH) & (not editing_mode) & (not qskill_mode)& (not wskill_mode)& (not eskill_mode)& (not rskill_mode)):
+                            
                             GoOneStep(screen,quads_color_list,event.pos,init_quads)
                     elif(rskill_mode):
                         rerskillrect[y][x]=init_quads[y][x]
