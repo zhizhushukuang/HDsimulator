@@ -1,0 +1,9 @@
+{
+    "init_point_ratio": [0.415, 0.09],
+    "step_ratio": 0.05,
+    "yfixset":1,
+    "xfixset":1,
+    "fixlinestartpoint":1.01,
+    "picturename":"IMG",
+    "picture format":"png"
+  }
