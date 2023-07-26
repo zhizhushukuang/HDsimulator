@@ -1,3 +1,5 @@
+from ast import If
+#from curses import KEY_BACKSPACE
 import json
 import pygame
 import os
@@ -11,6 +13,7 @@ WalkedPath = []
 Quad=60
 WIDTH = 9 * Quad
 HEIGHT = 12 * Quad
+#line_break=True
 
 # 颜色定义
 RED = pygame.Color(255, 0, 0)
@@ -22,39 +25,42 @@ BLACK = pygame.Color(0, 0, 0)
 READYTOCHANGE=(202,178,114)
 READYTOCHANGEcolor=0
 READYTOCHANGEcolor2=7
-
-bechangedcolor1=2
-bechangedcolor2=3
+font_size = 36
+bechangedcolorforskillq1=2
+bechangedcolorforskillq2=9
+bechangedcolorforskillw1=3
+bechangedcolorforskillw2=2
 bechangedcolorto=4#1是蓝色，2是红色，3是黄色，4是绿色
 LastPos = []
 rexcolor=[]
 reycolor=[]
-BaseColor = [BLUE,RED,YELLOW,GREEN,RAINBOW]
+BaseColor = [BLUE,RED,YELLOW,GREEN,RAINBOW,BLACK]
 PlayerColor = pygame.Color(114,51,4)
 MonsterColor = pygame.Color(255,255,255)
 LineColor = pygame.Color(128,0,128)
 UsedColorQueue = []
-used_priority_list=[]
-priority_list=[]
-fixpriority_list=0
 CurrentIndex = 0
 rerskillrect=[[7]*9 for i in range(9)]
+new_collected_color_order=[]
 # 读取配置文件
 
 def ChangeQuadColor(Position, SquareColor, NewColor):
     x = int(Position[0] / Quad)
     y = int(Position[1] / Quad)
     SquareColor[y][x] = NewColor
-    
+
+def write_to_file(colors_list):
+    file_path = 'new_collected_color_order.txt'
+    with open(file_path, 'a') as file:
+        colors_str = ','.join(map(str, colors_list))
+        if  colors_list:
+            file.write(colors_str + '\n')   
 
 def GoOneStep(screen, ColorList, Position, SquareColor):
     global CurrentIndex
     global UsedColorQueue
     global WalkedPath
-    global used_priority_list
-    global priority_list
-    global fixpriority_list
-    QuadColor = BaseColor[ColorList[CurrentIndex]]
+    
     PathLength = len(WalkedPath)
     x = int(Position[0] / Quad)
     y = int(Position[1] / Quad)
@@ -63,9 +69,12 @@ def GoOneStep(screen, ColorList, Position, SquareColor):
     x = pos[0]
     y = pos[1]
     UsedColorQueue.append(SquareColor[y][x])
-    used_priority_list.append(CurrentIndex+fixpriority_list)
-    priority_list[y][x]=CurrentIndex+fixpriority_list
-    SquareColor[y][x] = ColorList[CurrentIndex]
+    if (CurrentIndex < len(ColorList)) and (ColorList[CurrentIndex]!=6):
+        QuadColor = BaseColor[ColorList[CurrentIndex]]
+        SquareColor[y][x] = ColorList[CurrentIndex]
+    else:
+        QuadColor=BaseColor[5]
+        SquareColor[y][x] = 6
     CurrentIndex = CurrentIndex + 1
     print("Used Queue:")
     print(UsedColorQueue)
@@ -77,16 +86,11 @@ def BackOneStep(screen, ColorList, SquareColor):
     global CurrentIndex
     global UsedColorQueue
     global WalkedPath
-    global priority_list
-    global used_priority_list
-    global fixpriority_list
     QuadColor = UsedColorQueue.pop()
     WalkedPath.pop()
     LastPos = WalkedPath[len(WalkedPath) - 1]
     x = LastPos[0]
     y = LastPos[1]
-    repriority_list=used_priority_list.pop()
-    priority_list[y][x]=repriority_list
     SquareColor[y][x] = QuadColor
     CurrentIndex = CurrentIndex - 1
     print("Used Queue:")
@@ -101,7 +105,7 @@ def distance_from_given_point(point,given_point):
     return distance
 def fixmathatan2(x,y):
     arc=math.atan2(x,y)
-    if(math.atan2(x,y)<0):
+    if(math.atan2(x,y)<=0):
         arc=math.atan2(x,y)+2*math.pi
     else:
         arc=math.atan2(x,y)
@@ -111,71 +115,69 @@ def youxianjipaixu(list1, player_position):
     sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (player_position[0],player_position[1])), -fixmathatan2(player_position[0]-point[0],player_position[1]-point[1])))
     return sorted_points
 
-def skill_q(screen, position, init_quads,changenumber):
-    global CurrentIndex
-    global UsedColorQueue
-    global WalkedPath
-    global reinit_quads
-    global bechangedcolor1
-    global READYTOCHANGEcolor
-    reinit_quads=init_quads
-    list1=[]
-    player_position=position
-    x=player_position[0]
-    y=player_position[1]
-    for i in range(0,9):
-         for j in range(0,9):
-            if(init_quads[i][j]==bechangedcolor1):
-                list1.append([j,i])
-    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -priority_list[point[0]][point[1]]))          
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(point[1]-player_position[1],point[0]-player_position[0])))    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(point[0]-player_position[0],point[1]-player_position[1])))    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(player_position[1]-point[1],player_position[0]-point[0])))    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(player_position[0]-point[0],player_position[1]-point[1]))) 
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(point[1]-player_position[1],point[0]-player_position[0])))    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(point[0]-player_position[0],point[1]-player_position[1])))    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(player_position[1]-point[1],player_position[0]-point[0])))    
-    #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(player_position[0]-point[0],player_position[1]-point[1])))         
-    sorted_points=youxianjipaixu(list1, player_position)
-    k=0          
-    for i in range(0,min(changenumber,len(list1))):
-        obj1=sorted_points[i+k]
-        x1=obj1[0]
-        y1=obj1[1]
-        if(x==x1 and y==y1):
-            k=1
-            obj1=sorted_points[i+k]
-            x1=obj1[0]
-            y1=obj1[1]
+# def skill_w(screen, position, init_quads,changenumber):
+#     global CurrentIndex
+#     global UsedColorQueue
+#     global WalkedPath
+#     global reinit_quads
+#     global bechangedcolorforskillq1
+#     global bechangedcolorforskillq2
+#     global READYTOCHANGEcolor
+#     reinit_quads=init_quads
+#     list1=[]
+#     player_position=position
+#     x=player_position[0]
+#     y=player_position[1]
+#     for i in range(0,9):
+#          for j in range(0,9):
+#             if(init_quads[i][j]==bechangedcolorforskillq1) or (init_quads[i][j]==bechangedcolorforskillq2):
+#                 list1.append([j,i])
+             
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(point[1]-player_position[1],point[0]-player_position[0])))    
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(point[0]-player_position[0],point[1]-player_position[1])))    
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(player_position[1]-point[1],player_position[0]-point[0])))    
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), fixmathatan2(player_position[0]-point[0],player_position[1]-point[1]))) 
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(point[1]-player_position[1],point[0]-player_position[0])))    
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(point[0]-player_position[0],point[1]-player_position[1])))    
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(player_position[1]-point[1],player_position[0]-point[0])))    
+#     #sorted_points = sorted(list1, key=lambda point: (distance_from_given_point(point, (x,y)), -fixmathatan2(player_position[0]-point[0],player_position[1]-point[1])))         
+#     sorted_points=youxianjipaixu(list1, player_position)
+#     k=0          
+#     for i in range(0,min(changenumber,len(list1))):
+#         obj1=sorted_points[i+k]
+#         x1=obj1[0]
+#         y1=obj1[1]
+#         if(x==x1 and y==y1):
+#             k=1
+#             obj1=sorted_points[i+k]
+#             x1=obj1[0]
+#             y1=obj1[1]
         
-        init_quads[y1][x1]=READYTOCHANGEcolor
-    print(sorted_points)
+#         init_quads[y1][x1]=READYTOCHANGEcolor
+#     print(sorted_points)
 
-def REskill_q(screen, init_quads):
-    global bechangedcolor1
-    global READYTOCHANGEcolor
-    for i in range(0,9):
-         for j in range(0,9):
-            if(init_quads[i][j]==READYTOCHANGEcolor):
-                init_quads[i][j]=bechangedcolor1
+# def REskill_w(screen, init_quads):
+#     global bechangedcolorforskillq1
+#     global READYTOCHANGEcolor
+#     for i in range(0,9):
+#          for j in range(0,9):
+#             if(init_quads[i][j]==READYTOCHANGEcolor):
+#                 init_quads[i][j]=bechangedcolorforskillq1
 
-def ENskill_q(screen, init_quads):
-    global bechangedcolorto
-    global READYTOCHANGEcolor
+# def ENskill_w(screen, init_quads):
+#     global bechangedcolorto
+#     global READYTOCHANGEcolor
     
-    for i in range(0,9):
-         for j in range(0,9):
-            if(init_quads[i][j]==READYTOCHANGEcolor):
-                init_quads[i][j]=bechangedcolorto
+#     for i in range(0,9):
+#          for j in range(0,9):
+#             if(init_quads[i][j]==READYTOCHANGEcolor):
+#                 init_quads[i][j]=bechangedcolorto
     
-def skill_w(screen, position, init_quads,changenumber):
+def skill_w(screen, position, init_quads,changenumber,bechangedcolor1,bechangedcolor2):
     global CurrentIndex
     global UsedColorQueue
     global WalkedPath
     global reinit_quads
-    global bechangedcolor1
-    global bechangedcolor2
     global READYTOCHANGEcolor
     global READYTOCHANGEcolor2
     reinit_quads=init_quads
@@ -206,10 +208,8 @@ def skill_w(screen, position, init_quads,changenumber):
             init_quads[y1][x1]=READYTOCHANGEcolor2
     print(sorted_points)
 
-def REskill_w(screen, init_quads):
-    global bechangedcolor1
+def REskill_w(screen, init_quads,bechangedcolor1,bechangedcolor2):
     global READYTOCHANGEcolor
-    global bechangedcolor2
     global READYTOCHANGEcolor2
     for i in range(0,9):
          for j in range(0,9):
@@ -227,7 +227,7 @@ def ENskill_w(screen, init_quads):
             if(init_quads[i][j]==READYTOCHANGEcolor or init_quads[i][j]==READYTOCHANGEcolor2 ):
                 init_quads[i][j]=bechangedcolorto
 
-def skill_e(screen, position, init_quads):
+def skill_e(screen, position, init_quads,x_judge,y_judge):
     global reinit_quads
     global READYTOCHANGEcolor
     global rexcolor
@@ -237,11 +237,11 @@ def skill_e(screen, position, init_quads):
     y=player_position[0]
     x=player_position[1]
     for i in range(0,9):
-        if(i!=y and init_quads[x][i]!=6):
+        if(i!=y and init_quads[x][i]!=6 and x_judge):
             rexcolor.append(init_quads[x][i])
             init_quads[x][i]=READYTOCHANGEcolor   
     for i in range(0,9):
-        if(i!=x and init_quads[i][y]!=6):
+        if(i!=x and init_quads[i][y]!=6 and y_judge):
             reycolor.append(init_quads[i][y])
             init_quads[i][y]=READYTOCHANGEcolor
             
@@ -298,35 +298,40 @@ def OutputNewconfig(Config, ColorList, SquareColor):
     NewconfigPath = os.getcwd() + "\\Newconfig.json"
     Newconfig = dict()
     Newconfig["InitQuads"] = SquareColor
-    Newconfig["priority_list"]=priority_list
     Newconfig["PlayerPosition"] = [x,y]
     Newconfig["MonsterPosition"] = Config["MonsterPosition"]
-    Newconfig["bechangedcolor1"]=bechangedcolor1
-    Newconfig["bechangedcolor2"]=bechangedcolor2
+    Newconfig["new_collected_color_order"]=new_collected_color_order
+    Newconfig["bechangedcolorforskillq1"]=[bechangedcolorforskillq1]
+    Newconfig["bechangedcolorforskillq2"]=[bechangedcolorforskillq2]
+    Newconfig["bechangedcolorforskillw1"]=[bechangedcolorforskillw1]
+    Newconfig["bechangedcolorforskillw2"]=[bechangedcolorforskillw2]
     Newconfig["bechangedcolorto"]=bechangedcolorto
-    Newconfig["fixpriority_list"]=CurrentIndex
     Newconfig["QuadsColorList"] = NewColorList
+
     f = open(NewconfigPathTmp,'w+')
     json.dump(Newconfig, f, indent = 0, separators = (",",":"))
     f.close()
     with open(NewconfigPathTmp,"r") as fin:
         with open(NewconfigPath, "w+") as fout:
             for line in fin:
-                if not ("]," in line):
-                    fout.write(line.replace("\n",""))
-                else:
-                    fout.write(line)
-    os.remove(NewconfigPathTmp)
+                line = line.rstrip()  # 去掉行末的空格和换行符
+                fout.write(line + "\n")  # 在每一行的末尾添加换行符"\n"
+    #             if not ("]," in line):
+    #                 fout.write(line.replace("\n",""))
+    #             else:
+    #                 fout.write(line)
+    # os.remove(NewconfigPathTmp)
 
 def main():
     global CurrentIndex
     global bechangedcolorto
-    global bechangedcolor1
-    global bechangedcolor2
-    global priority_list
-    global fixpriority_list
+    global bechangedcolorforskillq1
+    global bechangedcolorforskillq2
+    global bechangedcolorforskillw1
+    global bechangedcolorforskillw2
     temp=[]
     config_path = "config.json"
+    global new_collected_color_order
     try:
         with open(config_path, "r") as f:
             config = json.load(f)
@@ -334,12 +339,17 @@ def main():
             reinit_quads=[]
             quads_color_list = config["QuadsColorList"]
             player_position =config["PlayerPosition"]
-            bechangedcolor1=config["bechangedcolor1"]
-            bechangedcolor2=config["bechangedcolor2"]
-            bechangedcolorto=config["bechangedcolorto"]
+            q1=config["bechangedcolorforskillq1"]
+            bechangedcolorforskillq1=q1[0]
+            q2=config["bechangedcolorforskillq2"]
+            bechangedcolorforskillq2=q2[0]
+            w1=config["bechangedcolorforskillw1"]
+            bechangedcolorforskillw1=w1[0]
+            w2=config["bechangedcolorforskillw2"]
+            bechangedcolorforskillw2=w2[0]
+            colorto=config["bechangedcolorto"]
+            bechangedcolorto=colorto[0]
             WalkedPath.append(player_position)
-            priority_list=config["priority_list"]
-            fixpriority_list=config["fixpriority_list"]
     except FileNotFoundError:
         print("无法加载盘面。请确保有名为 'board.json' 的正确格式的文件。")
         return
@@ -348,13 +358,15 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Connect the Dots")
-
+    global font_size
+    font = pygame.font.Font(None, font_size)
     # 游戏状态
     editing_mode = False
     qskill_mode=False
     wskill_mode=False
     eskill_mode=False
     rskill_mode=False
+    fskill_mode=False
     x,y=player_position
     path = [player_position]
     used_colors = []
@@ -390,13 +402,57 @@ def main():
         for Pos in MonsterPosition:
                 Center = [Pos[0] * Quad + 0.5*Quad, Pos[1] * Quad + 0.5*Quad]
                 pygame.draw.circle(screen,MonsterColor, Center, 0.3*Quad)
+        char_width = font.size("5")[0]
+        max_chars_per_line = WIDTH // char_width
+        text_lines = '\n'.join(str(item) for item in new_collected_color_order)
+        # 假设new_collected_color_order是过长的列表
+        text_lines = []
+        current_line = ""
         
-        
+        # global line_break
+        text_lines = [f"edit: {editing_mode},skill: q: {qskill_mode}, w: {wskill_mode}, e: {eskill_mode}",f"r:{rskill_mode},f:{fskill_mode},collectcolor: "]
+        for item in new_collected_color_order:
+            
+            item_str = str(item)
+            if len(current_line) + len(item_str) <= max_chars_per_line:
+                current_line += item_str
+            else:
+                text_lines.append(current_line)
+                current_line = item_str
+                # line_break=not line_break
+                # if(line_break):
+                #     font_size -= 2
+                #     font = pygame.font.SysFont(None, font_size)
+        if current_line:
+            text_lines.append(current_line)
+        # max_lines=4
+        # text_lines_list = text_lines.split('\n')
+        # if len(text_lines_list) > max_lines:
+        #     # 如果文本行数超过四行，则缩小字号
+        #     
+        #     
+        #     max_lines+=1
+        #     text_surfaces.clear()
+        # else:
+        #     pass
+
+        text_surfaces = [font.render(line, True, (255, 255, 255)) for line in text_lines]  # 文本内容、是否抗锯齿、字体颜色
+        text_height = sum(surface.get_height() for surface in text_surfaces)
+        text_y = (20.5*Quad - text_height) // 2
+        for surface in text_surfaces:
+            text_rect = surface.get_rect(center=(4.5*Quad, text_y))
+            screen.blit(surface, text_rect)
+            text_y += surface.get_height()
+        # text_rect = text_surface.get_rect()
+        # text_rect.center = (4*Quad, 10*Quad)
+        # screen.blit(text_surface,text_rect)
 
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
             elif event.type == pygame.KEYUP:
+                x=WalkedPath[len(WalkedPath)-1][0]
+                y=WalkedPath[len(WalkedPath)-1][1]
                 print("KEYUP:",event.key)
                 if event.key == K_ESCAPE :
                     editing_mode = not editing_mode
@@ -414,12 +470,22 @@ def main():
                 elif event.key == K_r:
                     rskill_mode=not rskill_mode
                     print("rskill_mode:",rskill_mode)
+                elif event.key == K_f:
+                    fskill_mode=not fskill_mode
+                    print("fskill_mode:",fskill_mode)
                 elif event.key == K_t:
                     if CurrentIndex < len(quads_color_list):
                         CurrentIndex=CurrentIndex+1
+                    elif (CurrentIndex > len(quads_color_list))&(editing_mode):
+                        new_collected_color_order.append(6)
+                        quads_color_list.append(6)
+                        print(new_collected_color_order)
                 elif event.key == 32:
-                    if(CurrentIndex>0):
+                    if(CurrentIndex>0)&(CurrentIndex < len(quads_color_list)):
                         CurrentIndex=CurrentIndex-1
+                    elif CurrentIndex > len(quads_color_list):
+                        new_collected_color_order.pop()
+                        quads_color_list.pop()
                 elif event.key == K_RETURN:
                     # 按下回车键，移动到连线终点并填充路径上的方块
                     player_position=WalkedPath[len(WalkedPath)-1]
@@ -441,31 +507,36 @@ def main():
                             ChangeQuadColor(LastPos,init_quads,5)
                         if event.key == K_6:
                             ChangeQuadColor(LastPos,init_quads,6)
+                        if event.key == K_BACKSPACE:
+                            if(len(new_collected_color_order)>0):
+                                quads_color_list.pop()
+                                new_collected_color_order.pop()
+                                print(new_collected_color_order)
                         pygame.display.update()
                 elif(qskill_mode == True):
                         if event.key == K_1:
-                            skill_q(screen,(x,y),init_quads,4)
+                            skill_w(screen,WalkedPath[len(WalkedPath)-1],init_quads,4,bechangedcolorforskillq1,bechangedcolorforskillq2)
                         if event.key == K_2:
-                            skill_q(screen,(x,y),init_quads,5)
+                            skill_w(screen,WalkedPath[len(WalkedPath)-1],init_quads,5,bechangedcolorforskillq1,bechangedcolorforskillq2)
                         if event.key == K_3:
-                            skill_q(screen,(x,y),init_quads,6)
+                            skill_w(screen,WalkedPath[len(WalkedPath)-1],init_quads,6,bechangedcolorforskillq1,bechangedcolorforskillq2)
                         if event.key == K_4:
-                            REskill_q(screen,init_quads)
+                            REskill_w(screen,init_quads,bechangedcolorforskillq1,bechangedcolorforskillq2)
                             qskill_mode=not qskill_mode
-                            print("REskill_q")   
+                            print("REskill_w")   
                         if event.key == K_5:
-                            ENskill_q(screen,init_quads)
+                            ENskill_w(screen,init_quads)
                             qskill_mode=not qskill_mode
                         pygame.display.update()
                 elif(wskill_mode == True):
                         if event.key == K_1:
-                            skill_w(screen,(x,y),init_quads,4)
+                            skill_w(screen,WalkedPath[len(WalkedPath)-1],init_quads,4,bechangedcolorforskillw1,bechangedcolorforskillw2)
                         if event.key == K_2:
-                            skill_w(screen,(x,y),init_quads,5)
+                            skill_w(screen,WalkedPath[len(WalkedPath)-1],init_quads,5,bechangedcolorforskillw1,bechangedcolorforskillw2)
                         if event.key == K_3:
-                            skill_w(screen,(x,y),init_quads,6)
+                            skill_w(screen,WalkedPath[len(WalkedPath)-1],init_quads,6,bechangedcolorforskillw1,bechangedcolorforskillw2)
                         if event.key == K_4:
-                            REskill_w(screen,init_quads)
+                            REskill_w(screen,init_quads,bechangedcolorforskillw1,bechangedcolorforskillw2)
                             wskill_mode=not wskill_mode
                             print("REskill_w")   
                         if event.key == K_5:
@@ -475,12 +546,16 @@ def main():
                         
                 elif(eskill_mode == True):
                         if event.key == K_1:
-                            skill_e(screen,(x,y),init_quads)
+                            skill_e(screen,WalkedPath[len(WalkedPath)-1],init_quads,1,1)
                         if event.key == K_2:
-                            REskill_e(screen,(x,y),init_quads)
+                            skill_e(screen,WalkedPath[len(WalkedPath)-1],init_quads,0,1)
+                        if event.key == K_3:
+                            skill_e(screen,WalkedPath[len(WalkedPath)-1],init_quads,1,0)
+                        if event.key == K_4:
+                            REskill_e(screen,WalkedPath[len(WalkedPath)-1],init_quads)
                             eskill_mode=not eskill_mode
                             print("REskill_e")   
-                        if event.key == K_3:
+                        if event.key == K_5:
                             ENskill_e(screen,init_quads)
                             eskill_mode=not eskill_mode
                             print("REskill_e") 
@@ -493,14 +568,19 @@ def main():
                 y = int(LastPos[1] / Quad)
                 if event.button == 1:
                     print(event.pos)
-                    if ((CurrentIndex < len(quads_color_list)) & (event.pos[0] < WIDTH) & (event.pos[1] < WIDTH) & (not editing_mode) & (not qskill_mode)& (not wskill_mode)& (not eskill_mode)& (not rskill_mode)):
+                    if ((event.pos[0] < WIDTH) & (event.pos[1] < WIDTH) & (not editing_mode) & (not qskill_mode)& (not wskill_mode)& (not eskill_mode)& (not rskill_mode)&(not fskill_mode)):
                             
                             GoOneStep(screen,quads_color_list,event.pos,init_quads)
                     elif(rskill_mode):
                         rerskillrect[y][x]=init_quads[y][x]
                         ChangeQuadColor(LastPos,init_quads,bechangedcolorto)
-                    elif ((event.pos[1] > 9*Quad) & (event.pos[1] < 11*Quad)):
-                            OutputNewconfig(config, quads_color_list, init_quads)
+                    elif(fskill_mode):
+                        try:
+                            MonsterPosition.remove([x,y])
+                        except:
+                            MonsterPosition.append([x,y])
+                    # elif ((event.pos[1] > 9*Quad) & (event.pos[1] < 11*Quad)):
+                    #         OutputNewconfig(config, quads_color_list, init_quads)
                 if event.button == 2:
                     if(not rskill_mode):
                         OutputNewconfig(config, quads_color_list, init_quads)
@@ -513,9 +593,17 @@ def main():
                     elif(rskill_mode):
                         rerskillrect[y][x]=init_quads[y][x]
                         ChangeQuadColor(LastPos,init_quads,5)
+                    elif(editing_mode):#&(CurrentIndex>len(quads_color_list))
+                        quads_color_list.append(init_quads[y][x])
+                        new_collected_color_order.append(init_quads[y][x])
+                        print(new_collected_color_order)
         for i in range(0,9):
-                if (i + CurrentIndex >= len(quads_color_list)):
+                if(i + CurrentIndex >= len(quads_color_list)):
                     pygame.draw.rect(screen, BLACK, pygame.Rect(i*Quad, WIDTH + 2*Quad, i*Quad+Quad, HEIGHT))
+                elif  CurrentIndex >= len(quads_color_list):
+                    QuadColor = BaseColor[new_collected_color_order[CurrentIndex + i-len(quads_color_list)-1]-1]
+                    pygame.draw.rect(screen, QuadColor, pygame.Rect(i*Quad, WIDTH + 2*Quad, i*Quad+Quad, HEIGHT))
+                
                 else:
                     QuadColor = BaseColor[quads_color_list[CurrentIndex + i]-1]
                     pygame.draw.rect(screen, QuadColor, pygame.Rect(i*Quad, WIDTH + 2*Quad, i*Quad+Quad, HEIGHT))
@@ -534,6 +622,8 @@ def main():
                 screen.blit(LengthText,(x*Quad,y*Quad))
                 
         pygame.display.update()
+    pygame.quit()
+    write_to_file(new_collected_color_order)
 
 if __name__ == '__main__':
     main()
